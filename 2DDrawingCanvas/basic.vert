@@ -10,6 +10,6 @@ void main()
     vColor = VertexColor;
 
     gl_Position = vec4(VertexPosition,1.0);
-    gl_PointSize = 28.0f;
+    gl_PointSize = 10.0f;
 }
 

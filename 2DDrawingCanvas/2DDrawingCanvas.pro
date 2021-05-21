@@ -17,6 +17,7 @@ SOURCES += \
 HEADERS += \
     3rd_party_deps/glad/include/KHR/khrplatform.h \
     3rd_party_deps/glad/include/glad/glad.h \
+    constants.h \
     mainwindow.h \
     renderwindow.h
 
