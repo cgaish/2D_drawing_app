@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
     //statusBar->showMessage(tr(rw->openGLInfo));
     MainWindow::setStatusBar(statusBar);
 
+    qDebug() << "Main window size: " << this->width() << " | " << this->height();
+
 ;}
 
 MainWindow::~MainWindow()
@@ -40,5 +42,5 @@ MainWindow::~MainWindow()
 
 QSize MainWindow::sizeHint() const
 {
-    return QSize(900, 500);
+    return QSize(1200, 1000);
 }

@@ -58,22 +58,35 @@ public:
     void linkShaders(GLint vertShader, GLint fragShader);
     void setupGeometry();
     void calculateAngle( float t );
+    void checkDebugContext();
 
 protected:
     void initializeGL() override;
     void paintGL() override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    static void APIENTRY glDebugOutput(
+            GLenum source,
+            GLenum type,
+            unsigned int id,
+            GLenum severity,
+            GLsizei length,
+            const char* message,
+            const void* userParam
+            );
 
 private:
-    // OpenGL variables
-    GLuint vaoHandle;
-    GLuint programHandle;
+    // cpp variables
     double xPos, yPos, zPos=0;
     std::vector<float> geo;
     float test = 0.0f;
+
+    // OpenGL variables
+    GLuint vaoHandle;
     GLuint vboHandles[2];
+    GLuint programHandle;
     GLuint positionBufferHandle;
+    GLuint colorBufferHandle;
 
 signals:
 
