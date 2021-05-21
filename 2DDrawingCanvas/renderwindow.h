@@ -8,15 +8,8 @@
 #include <sstream>
 #include <vector>
 
-// Third party OpenGL Libs
-#include <glad.h>
-// GLM
-#include "glm/glm.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/vec3.hpp"
-#include "glm/mat4x4.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-
+// Constants
+#include <constants.h>
 
 // Qt OpenGL Libs
 #include <QOpenGLWidget>
@@ -36,7 +29,6 @@
 #include <QDebug>
 #include <QString>
 
-
 class RenderWindow : public QOpenGLWidget
 {
     Q_OBJECT
@@ -45,6 +37,7 @@ public:
     QString openGLInfo;
     float angle;
     glm::mat4 rotationMatrix;
+    bool beginDrawing = false;
 
 public:
     explicit RenderWindow(QWidget *widget = nullptr);
@@ -65,6 +58,10 @@ protected:
     void paintGL() override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void printAllVariables();
+//    void resizeEvent(QResizeEvent* ev) override {
+//        resizeGL(width(), height());
+//    }
     static void APIENTRY glDebugOutput(
             GLenum source,
             GLenum type,
@@ -78,8 +75,9 @@ protected:
 private:
     // cpp variables
     double xPos, yPos, zPos=0;
-    std::vector<float> geo;
-    float test = 0.0f;
+    std::vector<glm::vec3> pointGeo;
+    std::vector<glm::vec3> pointColor;
+    int pointCount = 1;
 
     // OpenGL variables
     GLuint vaoHandle;

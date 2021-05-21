@@ -12,34 +12,48 @@ RenderWindow::~RenderWindow()
 
 void RenderWindow::initializeGL()
 {
+    qDebug() << "/////////////////// Initializing OpenGL ////////////////////";
+
     if(!gladLoadGL()){
         qDebug() << "Unable to load OpenGL functions" << "\n";
         exit(EXIT_FAILURE);
     }
     getOpenGLInfo();
     checkDebugContext();
-    glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
+    glClearColor(BACKGROUND_COLOR[0],
+                 BACKGROUND_COLOR[1],
+                 BACKGROUND_COLOR[2],
+                 BACKGROUND_COLOR[3]);
 
     // To draw points this must be initialized
     glEnable(GL_PROGRAM_POINT_SIZE);
-    // Query point size range
-    GLfloat sizeRange[2] = {0.0f};
-    glGetFloatv(GL_POINT_SIZE_RANGE, sizeRange);
-    qDebug() << "Point size range: " << sizeRange[0] << sizeRange[1];
 
+    // Generate buffer objects before initializing
+    glGenBuffers(2, vboHandles);
+    positionBufferHandle = vboHandles[0];
+    colorBufferHandle = vboHandles[1];
+    glGenVertexArrays( 1, &vaoHandle );
+
+   // pointColor.push_back(POINT_COLOR);
     // Setup shaders and geometry
     setupShaders();
     setupGeometry();
+
 }
 
 void RenderWindow::paintGL()
 {
-
+    qDebug() << "/////////////////// Drawing ////////////////////";
+    printAllVariables();
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindVertexArray(vaoHandle);
-    glDrawArrays(GL_POINTS, 0, 3 );
-    glBindVertexArray(0);
+    if( beginDrawing )
+    {
+        glUseProgram(programHandle);
+        glBindVertexArray(vaoHandle);
+        glDrawArrays(GL_POINTS, 0, pointGeo.size() );
+        glBindVertexArray(0);
+    }
 }
 
 void RenderWindow::uninitializeGL()
@@ -49,8 +63,9 @@ void RenderWindow::uninitializeGL()
 
 void RenderWindow::setupShaders()
 {
+    qDebug() << "/////////////////// Compiling Shaders ////////////////////";
     // Vertex shader
-    qDebug() << "Compiling Shader Program";
+
     std::ifstream inFile("../2DDrawingCanvas/basic.vert");
     if(!inFile) {
         fprintf(stderr, "Error opening file: vertex.glsl\n");
@@ -128,6 +143,7 @@ void RenderWindow::setupShaders()
 
 void RenderWindow::linkShaders(GLint vertShader, GLint fragShader)
 {
+   qDebug() << "/////////////////// Linking Up Shaders ////////////////////";
     // Create the program object
    programHandle = glCreateProgram();
    if(0 == programHandle) {
@@ -167,43 +183,28 @@ void RenderWindow::linkShaders(GLint vertShader, GLint fragShader)
 
 void RenderWindow::setupGeometry()
 {
-    /////////////////// Create the VBO ////////////////////
-       float positionData[] = {
-               0.0f,  0.0f, 0.0f,
-               0.8f, -0.8f, 0.0f,
-               0.0f,  0.8f, 0.0f
-       };
-       float colorData[] = {
-               1.0f, 0.0f, 0.0f,
-               1.0f, 0.0f, 0.0f,
-               1.0f, 0.0f, 0.0f
-       };
-
+       qDebug() << "/////////////////// Setting Up Geometry ////////////////////";
 
        // Create and populate the buffer objects
-       glGenBuffers(2, vboHandles);
-       positionBufferHandle = vboHandles[0];
-       colorBufferHandle = vboHandles[1];
 
        glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-       glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), positionData, GL_STATIC_DRAW);
+       glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pointCount, pointGeo.data(), GL_STATIC_DRAW);
 
        glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-       glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), colorData, GL_STATIC_DRAW);
+       glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pointCount, pointColor.data(), GL_STATIC_DRAW);
 
        // Create and set-up the vertex array object
-       glGenVertexArrays( 1, &vaoHandle );
+
        glBindVertexArray(vaoHandle);
 
        glEnableVertexAttribArray(0);  // Vertex position
        glEnableVertexAttribArray(1);  // Vertex color
 
        glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-       glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
+       glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLubyte *)NULL );
 
        glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-       glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
-       glBindVertexArray(0);
+       glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLubyte *)NULL );
 
 }
 
@@ -223,14 +224,40 @@ void RenderWindow::checkDebugContext()
 
 void RenderWindow::mousePressEvent(QMouseEvent *event)
 {
+    qDebug() << "/////////////////// Mouse Click Event ////////////////////";
+    // Get screen click coordinates
     xPos = event->x();
     yPos = event->y();
 
-    test += 0.1f;
-    qDebug() << "XPOS at press: " << xPos << "YPOS at press: " << yPos;
-    geo.push_back(test);
-    geo.push_back(test);
-    geo.push_back(0.0f);
+    // Define NDC values
+    float max_ndc = +1.0f;
+    float min_ndc = -1.0f;
+    float offset = 2;
+
+    // Calculate NDC
+    float pPosX = min_ndc + offset * xPos / this->width();
+    float pPosY = max_ndc - offset * yPos / this->height();
+    float pPosZ = 1.0f;
+
+    // Update with new point NDC coordinates
+    glm::vec3 pointCoord = glm::vec3(pPosX, pPosY, pPosZ);
+    pointGeo.push_back(pointCoord);
+
+    // Update point color values for new point
+    pointColor.push_back(POINT_COLOR);
+
+    // Update point count
+    pointCount = pointGeo.size();
+
+    // Pass new data to openGL
+    setupGeometry();
+
+    // Set draw to true
+    if( !beginDrawing )
+        beginDrawing = true;
+
+    // Draw
+    update();
 
 }
 
@@ -336,5 +363,17 @@ std::string RenderWindow::getProgramInfoLog(GLuint program)
 const char* RenderWindow::getTypeString(GLint datatype)
 {
     //return std::to_string(datatype);
+}
+
+void RenderWindow::printAllVariables(){
+    qDebug() << "\n";
+    qDebug() << "/////////////////// Printing Variables Data ////////////////////";
+    qDebug() << " --------------------------------------------------------------------- ";
+    qDebug() << "| Point count: " << pointCount << "                           |";
+    qDebug() << "| Point geo size: " << pointGeo.size() << "                           |";
+    qDebug() << "| Point col size: " << pointColor.size() << "                           |";
+    qDebug() << " --------------------------------------------------------------------- ";
+    qDebug() << "\n";
+
 }
 
