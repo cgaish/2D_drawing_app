@@ -10,16 +10,27 @@ CONFIG += c++11
 
 SOURCES += \
     3rd_party_deps/glad/src/glad.c \
+    beziercurve.cpp \
+    glshaderprogram.cpp \
     main.cpp \
     mainwindow.cpp \
-    renderwindow.cpp
+    orthographiccamera.cpp \
+    point.cpp \
+    rendermanager.cpp
 
 HEADERS += \
     3rd_party_deps/glad/include/KHR/khrplatform.h \
     3rd_party_deps/glad/include/glad/glad.h \
+    beziercurve.h \
+    camera.h \
     constants.h \
+    glshaderexception.h \
+    glshaderprogram.h \
     mainwindow.h \
-    renderwindow.h
+    orthographiccamera.h \
+    point.h \
+    rendermanager.h \
+    rendermanager.h
 
 INCLUDEPATH += \
     3rd_party_deps/glad/include/glad/ \
@@ -32,5 +43,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     basic.frag \
-    basic.vert
+    basic.vert \
+    bez.fs \
+    bez.tcs \
+    bez.tes \
+    bez.vs \
+    cps.fs \
+    cps.vs
 

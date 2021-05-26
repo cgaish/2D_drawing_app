@@ -6,7 +6,7 @@
 #include <QApplication>
 
 #include "mainwindow.h"
-#include "renderwindow.h"
+#include "rendermanager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Set central widget to the opengl rendering widget
 
 
-    RenderWindow *rw = new RenderWindow;
+    RenderManager *rw = new RenderManager;
 
     this->setCentralWidget(rw);
 

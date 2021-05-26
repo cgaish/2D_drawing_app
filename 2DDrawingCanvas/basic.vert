@@ -1,15 +1,17 @@
-#version 460
+#version 450
 
-layout (location=0) in vec3 VertexPosition;
-layout (location=1) in vec3 VertexColor;
+layout (location=0) in vec3 l_VertexPosition;
+layout (location=1) in vec3 l_VertexColor;
 
-layout (location=0) out vec3 vColor;
+layout (location=0) out vec3 l_vColor;
+
+uniform mat4 u_MVPMatrix;
 
 void main()
 {
-    vColor = VertexColor;
+    l_vColor = l_VertexColor;
 
-    gl_Position = vec4(VertexPosition,1.0);
+    gl_Position = u_MVPMatrix * vec4(l_VertexPosition,1.0);
     gl_PointSize = 10.0f;
 }
 

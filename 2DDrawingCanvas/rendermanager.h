@@ -1,5 +1,5 @@
-#ifndef RENDERWINDOW_H
-#define RENDERWINDOW_H
+#ifndef RENDERMANAGER_H
+#define RENDERMANAGER_H
 
 // Cpp Libs
 #include <iostream>
@@ -29,27 +29,30 @@
 #include <QDebug>
 #include <QString>
 
-class RenderWindow : public QOpenGLWidget
+#include "Camera.h"
+#include "orthographiccamera.h"
+#include "glshaderprogram.h"
+#include "point.h"
+#include "beziercurve.h"
+
+class RenderManager : public QOpenGLWidget
 {
     Q_OBJECT
 public:
     // OpenGL specific variables
     QString openGLInfo;
-    float angle;
-    glm::mat4 rotationMatrix;
     bool beginDrawing = false;
 
 public:
-    explicit RenderWindow(QWidget *widget = nullptr);
-    ~RenderWindow();
+    explicit RenderManager(QWidget *widget = nullptr);
+    ~RenderManager();
     void getOpenGLInfo();
     void uninitializeGL();
     std::string getShaderInfoLog(GLuint shader);
     std::string getProgramInfoLog(GLuint program);
     const char* getTypeString(GLint datatype);
-    void setupShaders();
-    void linkShaders(GLint vertShader, GLint fragShader);
-    void setupGeometry();
+
+    void setupEntity();
     void calculateAngle( float t );
     void checkDebugContext();
 
@@ -58,6 +61,7 @@ protected:
     void paintGL() override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
     void printAllVariables();
 //    void resizeEvent(QResizeEvent* ev) override {
 //        resizeGL(width(), height());
@@ -73,21 +77,24 @@ protected:
             );
 
 private:
-    // cpp variables
+    // variables
+    int m_pointCount = 1;
     double xPos, yPos, zPos=0;
-    std::vector<glm::vec3> pointGeo;
-    std::vector<glm::vec3> pointColor;
-    int pointCount = 1;
+    float starting_x = 0.0f;
+    float starting_y = 0.0f;
 
-    // OpenGL variables
-    GLuint vaoHandle;
-    GLuint vboHandles[2];
-    GLuint programHandle;
-    GLuint positionBufferHandle;
-    GLuint colorBufferHandle;
+
+    // Class variables
+    OrthographicCamera m_CameraOrtho;
+    GLShaderProgram m_pointShaderProgram;
+    Entity::Point m_point;
+    Entity::BezierCurve m_bcurve;
+
+
+
 
 signals:
 
 };
 
-#endif // RENDERWINDOW_H
+#endif // RENDERMANAGER_H

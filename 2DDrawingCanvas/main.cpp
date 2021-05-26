@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat canvasFormat(QSurfaceFormat::DebugContext);
     canvasFormat.setDepthBufferSize(24);
     canvasFormat.setStencilBufferSize(8);
-    canvasFormat.setVersion(4, 6);
+    canvasFormat.setVersion(4, 5);
     canvasFormat.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(canvasFormat);
 
