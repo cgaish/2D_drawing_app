@@ -1,5 +1,5 @@
 #include "glshaderprogram.h"
-
+#include <QDebug>
 
 // Constructor
 GLShaderProgram::GLShaderProgram() : m_programHandle(0), m_linked(false) { }
@@ -28,11 +28,12 @@ bool GLShaderProgram::compileShaderFromFile(const char *fileName, GLShader::Shad
 {
 
     ///////////////////////// Error checks //////////////////////////////
-
+    qDebug() << "In Compile Shader from file: " << fileName;
     // Check if file doesnt exist return false
     if ( ! fileExists(fileName) )
     {
         m_logString = "File not found.";
+        GLShaderException(m_logString.c_str());
         return false;
     }
 
@@ -41,6 +42,7 @@ bool GLShaderProgram::compileShaderFromFile(const char *fileName, GLShader::Shad
         m_programHandle = glCreateProgram();
         if( m_programHandle == 0 ) {
             m_logString = "Unable to create shader program.";
+            GLShaderException(m_logString.c_str());
             return false;
         }
     }
@@ -48,6 +50,8 @@ bool GLShaderProgram::compileShaderFromFile(const char *fileName, GLShader::Shad
     // Check if shader file can be read else return false
     std::ifstream inShaderFile( fileName, std::ios::in );
     if( !inShaderFile ) {
+        m_logString = "Unable to read shader file?: ";
+        GLShaderException(m_logString.c_str());
         return false;
     }
 
@@ -82,13 +86,19 @@ bool GLShaderProgram::compileShaderFromString(const std::string &source, GLShade
 
     // Check if program handle is not created
     if( m_programHandle <= 0 ) {
+        qDebug() << "Creating program handle!";
         // Create one if not
         m_programHandle = glCreateProgram();
+        qDebug() << "Program handle id: " << m_programHandle;
         // Check if still handle is not created
         if( m_programHandle == 0 ){
             // Report and return false if failed.
             m_logString = "Unable to create shader program.";
+            GLShaderException(m_logString.c_str());
             return false;
+        }
+        else{
+            qDebug() << "program handle created successfully!";
         }
     }
 
@@ -110,6 +120,9 @@ bool GLShaderProgram::compileShaderFromString(const std::string &source, GLShade
     case GLShader::ShaderType::TESS_EVALUATION:
         shaderHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
         break;
+    case GLShader::ShaderType::COMPUTE:
+        shaderHandle = glCreateShader(GL_COMPUTE_SHADER);
+        break;
     default:
         return false;
     }
@@ -126,6 +139,7 @@ bool GLShaderProgram::compileShaderFromString(const std::string &source, GLShade
     // Check for compilation errors
     int result;
     glGetShaderiv( shaderHandle, GL_COMPILE_STATUS, &result );
+    qDebug() << "compile result:: " << result;
     // Check if result is true or not
     if( GL_FALSE == result ) {
         // Compile failed
@@ -137,21 +151,27 @@ bool GLShaderProgram::compileShaderFromString(const std::string &source, GLShade
             int written = 0;
             glGetShaderInfoLog( shaderHandle, length, &written, c_log );
             m_logString = c_log;
+            GLShaderException(m_logString.c_str());
             delete [] c_log;
         }
         return false;
     } else {
         // Compile succeeded , attach shader and return
         glAttachShader( m_programHandle, shaderHandle );
+        qDebug() << "Shader compile and attach success: ";
         return true;
     }
+
 }
 
 bool GLShaderProgram::link()
 {
     if( m_linked ) return true;
-        if( m_programHandle <= 0 ) return false;
-
+        if( m_programHandle <= 0 ) {
+            qDebug() << "No program handle while linking?";
+            return false;
+        }
+        qDebug() << "Linking.. , Program handle found: " << m_programHandle;
         glLinkProgram(m_programHandle);
 
         int status = 0;
@@ -173,11 +193,52 @@ bool GLShaderProgram::link()
 
             return false;
         } else {
+            findUniformLocations();
             m_linked = true;
             return m_linked;
         }
 }
+void GLShaderProgram::findUniformLocations() {
+    uniformLocations.clear();
 
+    GLint numUniforms = 0;
+#ifdef __APPLE__
+    // For OpenGL 4.1, use glGetActiveUniform
+    GLint maxLen;
+    GLchar *name;
+
+    glGetProgramiv(handle, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxLen);
+    glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+    name = new GLchar[maxLen];
+    for (GLuint i = 0; i < numUniforms; ++i) {
+        GLint size;
+        GLenum type;
+        GLsizei written;
+        glGetActiveUniform(handle, i, maxLen, &written, &size, &type, name);
+        GLint location = glGetUniformLocation(handle, name);
+        uniformLocations[name] = glGetUniformLocation(handle, name);
+    }
+    delete[] name;
+#else
+    // For OpenGL 4.3 and above, use glGetProgramResource
+    glGetProgramInterfaceiv( m_programHandle, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
+
+    GLenum properties[] = {GL_NAME_LENGTH, GL_TYPE, GL_LOCATION, GL_BLOCK_INDEX};
+
+    for( GLint i = 0; i < numUniforms; ++i ) {
+      GLint results[4];
+      glGetProgramResourceiv(m_programHandle, GL_UNIFORM, i, 4, properties, 4, NULL, results);
+
+      if( results[3] != -1 ) continue;  // Skip uniforms in blocks
+      GLint nameBufSize = results[0] + 1;
+      char * name = new char[nameBufSize];
+      glGetProgramResourceName(m_programHandle, GL_UNIFORM, i, nameBufSize, NULL, name);
+      uniformLocations[name] = results[2];
+      delete [] name;
+    }
+#endif
+}
 bool GLShaderProgram::validate()
 {
     if( ! isLinked() ) return false;
@@ -209,7 +270,13 @@ bool GLShaderProgram::validate()
 
 void GLShaderProgram::use()
 {
-    if( m_programHandle <= 0 || (! m_linked) ) return;
+    if( m_programHandle <= 0 || (! m_linked) ){
+        qDebug() << "Use unsuccessful, returning?";
+        qDebug() << "m_linked status: " << m_linked;
+        qDebug() << "Program handle: " << m_programHandle;
+        return;
+    }
+    qDebug() << "Use success, using program handle";
     glUseProgram( m_programHandle );
 }
 
@@ -275,7 +342,9 @@ void GLShaderProgram::setUniform(const char *name, const glm::vec4 &v)
 
 void GLShaderProgram::setUniform(const char *name, const glm::mat3 &m)
 {
+    qDebug() << "SetUniform Name: " << name;
     int loc = getUniformLocation(name);
+    qDebug() << "SetUniform Loc: " << loc;
     if( loc >= 0 )
     {
         glUniformMatrix3fv(loc, 1, GL_FALSE, &m[0][0]);
@@ -286,7 +355,9 @@ void GLShaderProgram::setUniform(const char *name, const glm::mat3 &m)
 
 void GLShaderProgram::setUniform(const char *name, const glm::mat4 &m)
 {
+    qDebug() << "SetUniform Name: " << name;
     int loc = getUniformLocation(name);
+    qDebug() << "SetUniform Loc: " << loc;
     if( loc >= 0 )
     {
         glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]);
@@ -345,7 +416,7 @@ void GLShaderProgram::printActiveUniforms()
     for( int i = 0; i < nUniforms; ++i ) {
         glGetActiveUniform( m_programHandle, i, maxLen, &written, &size, &type, name );
         location = glGetUniformLocation(m_programHandle, name);
-        printf(" %-8d | %s\n",location, name);
+        qDebug() << "Location: " << location << " Name: " << name;
     }
 
     free(name);

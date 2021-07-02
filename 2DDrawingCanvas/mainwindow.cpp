@@ -42,5 +42,5 @@ MainWindow::~MainWindow()
 
 QSize MainWindow::sizeHint() const
 {
-    return QSize(1200, 1000);
+    return QSize(1920, 1080);
 }

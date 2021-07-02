@@ -17,7 +17,7 @@
 #include <string>
 #include <map>
 #include <sys/stat.h>
-
+#include <glshaderexception.h>
 
 // Shader types
 namespace GLShader {
@@ -39,7 +39,6 @@ private:
     GLuint m_programHandle;
     bool m_linked;
     std::string m_logString;
-
     int  getUniformLocation(const char * name );
     bool fileExists( const std::string & fileName );
 
@@ -51,7 +50,7 @@ public:
     bool   link();
     bool   validate();
     void   use();
-
+    std::map<std::string, int> uniformLocations;
     std::string log();
 
     int    getHandle();
@@ -59,7 +58,7 @@ public:
 
     void   bindAttribLocation( GLuint location, const char * name);
     void   bindFragDataLocation( GLuint location, const char * name );
-
+    void   findUniformLocations();
     void   setUniform( const char *name, float x, float y, float z);
     void   setUniform( const char *name, const glm::vec2 & v);
     void   setUniform( const char *name, const glm::vec3 & v);

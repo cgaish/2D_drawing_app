@@ -1,5 +1,6 @@
 #include "rendermanager.h"
 #include "glshaderexception.h"
+#include <algorithm>
 
 RenderManager::RenderManager(QWidget *parent) : QOpenGLWidget(parent),
                 m_CameraOrtho(NDC_MIN, NDC_MAX, NDC_MIN, NDC_MAX) { }
@@ -19,26 +20,87 @@ void RenderManager::initializeGL()
     }
     getOpenGLInfo();
     checkDebugContext();
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glMinSampleShading(0.5f);
     glClearColor(BACKGROUND_COLOR[0],
                  BACKGROUND_COLOR[1],
                  BACKGROUND_COLOR[2],
                  BACKGROUND_COLOR[3]);
 
-    // To draw points this must be initialized
-    glEnable(GL_PROGRAM_POINT_SIZE);
+
+
+
 
     // Setup shaders and geometry
-    setupEntity();
+    //setupEntity();
+//    Entity::Geo::CubicCurve* curve1 = new Entity::Geo::CubicCurve();
+//    curve1->setupShaders();
+//    curve1->setupGeometry();
+//    curve1->setupMatrix();
+//    geoCurve.push_back(curve1);
+//    int count = 10000;
+//    for(int i = 0; i < count ; i++){
+//        Entity::Geo::Point *point = new Entity::Geo::Point;
+//        point->setPointColor(POINT_COLOR);
+//        point->setPointCoord(glm::vec3(0.0, 0.0, 0.0));
 
-}
+//        point->setupGeometry();
+//        point->setupShaders();
 
-void RenderManager::setupEntity()
-{
-    // Setup Point Entity
-    m_point.setupGeometry();
-    m_point.setupShaders();
-    m_point.setupMatrix("u_MVPMatrix", m_CameraOrtho.GetViewProjectionMatrix()); // Camera
+//        geoPoint.push_back(point);
+//    }
 
+    //point1.setupMatrix();
+
+//    Entity::Geo::Quad quad;
+//    quad.setupShaders();
+//    quad.setupGeometry();
+//    //quad.setupMatrix();
+//    geoQuad.push_back(quad);
+//    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+//    Entity::Geo::Point *point = new Entity::Geo::Point;
+//    glm::vec3 newPosition = generateRandomPosition();
+//    glm::mat4 trans = glm::mat4(1.0f);
+//    trans = glm::translate(trans, glm::vec3(-0.5f, -0.3f, 0.0f));
+
+
+
+//    point->setPointCoord(glm::vec3(-0.5, -0.5, 0.0));
+//    point->setPointCoord(glm::vec3(0.5, -0.5, 0.0));
+//    point->setPointCoord(glm::vec3(0.5, 0.5, 0.0));
+//    point->setPointCoord(glm::vec3(-0.5, 0.5, 0.0));
+//    point->setPointColor(RED);
+//    point->setPointColor(GREEN);
+//    point->setPointColor(BLUE);
+//    point->setPointColor(YELLOW);
+
+//    point->setupGeometry();
+//    point->setupShaders();
+//    //point->setupMatrix("u_MVPMatrix", trans);
+//    geoPoint.push_back(point);
+
+//    Entity::Geo::Triangles *tri = new Entity::Geo::Triangles;
+//    tri->setupShaders();
+//    tri->setupGeometry();
+//    geoTriangles.push_back(tri);
+
+//    Entity::Geo::Particles *p = new Entity::Geo::Particles();
+//    geoParticles.push_back(p);
+    //p->setupShaders();
+    //p->setupGeometry();
+
+//    Entity::Geo::Circle *circle1 = new Entity::Geo::Circle();
+//    circle1->setupShaders();
+//    circle1->setupGeometry();
+//    geoCircle.push_back(circle1);
+
+    Entity::Geo::Curve *curve1 = new Entity::Geo::Curve();
+    curve1->setupShaders();
+    curve1->setupGeometry();
+    Curve.push_back(curve1);
 
 }
 
@@ -46,10 +108,17 @@ void RenderManager::paintGL()
 {
     qDebug() << "/////////////////// Drawing ////////////////////";
     printAllVariables();
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Curve[0]->draw();
+    //createPrimitive();
+    //geoPoint[0]->draw();
+    //geoTriangles[0]->draw();
+//    geoParticles[0]->draw();
+//    geoCurve[0]->draw();
+//    for(auto &elem : geoPoint){
+//        elem->draw();
+//    }
 
-    if( beginDrawing )
-        m_point.draw();
 
 }
 
@@ -77,39 +146,39 @@ void RenderManager::mousePressEvent(QMouseEvent *event)
 
     qDebug() << "/////////////////// Mouse Click Event ////////////////////";
     // Get screen click coordinates
-    xPos = event->x();
-    yPos = event->y();
+    //xPos = event->x();
+    //yPos = event->y();
 
     // Define NDC values
-    float max_ndc = +1.0f;
-    float min_ndc = -1.0f;
-    float offset = 2;
+    //float max_ndc = +1.0f;
+    //float min_ndc = -1.0f;
+    //float offset = 2;
 
     // Calculate NDC
-    float pPosX = min_ndc + offset * xPos / this->width();
-    float pPosY = max_ndc - offset * yPos / this->height();
-    float pPosZ = 1.0f;
+    //float pPosX = min_ndc + offset * xPos / this->width();
+    //float pPosY = max_ndc - offset * yPos / this->height();
+    //float pPosZ = 1.0f;
 
     // Update with new point NDC coordinates
-    glm::vec3 pointCoord = glm::vec3(pPosX, pPosY, pPosZ);
-    m_point.setPointCoord(pointCoord);
+    //glm::vec3 pointCoord = glm::vec3(pPosX, pPosY, pPosZ);
+    //m_point.setPointCoord(pointCoord);
 
     // Update point color values for new point
-    m_point.setPointColor(POINT_COLOR);
+    //m_point.setPointColor(POINT_COLOR);
 
     // Update point count
-    m_pointCount = m_point.getPointCount();
+    //m_pointCount = m_point.getPointCount();
 
     // Pass new data to openGL
-    m_point.setupMatrix("u_MVPMatrix", m_CameraOrtho.GetViewProjectionMatrix());
-    m_point.update();
+    //m_point.setupMatrix("u_MVPMatrix", m_CameraOrtho.GetViewProjectionMatrix());
+    //m_point.update();
 
     // Set draw to true
     if( !beginDrawing )
         beginDrawing = true;
 
     // Draw
-    update();
+
 }
 
 void RenderManager::mouseReleaseEvent(QMouseEvent *event)
@@ -145,6 +214,7 @@ void RenderManager::mouseMoveEvent(QMouseEvent *event)
     }
     else
         qDebug() << "No Dragging..... ";
+    update();
 }
 
 void RenderManager::glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
@@ -236,20 +306,41 @@ std::string RenderManager::getProgramInfoLog(GLuint program)
     return log;
 }
 
-const char* RenderManager::getTypeString(GLint datatype)
-{
-    //return std::to_string(datatype);
-}
-
 void RenderManager::printAllVariables(){
     qDebug() << "\n";
     qDebug() << "/////////////////// Printing Variables Data ////////////////////";
     qDebug() << " --------------------------------------------------------------------- ";
-    qDebug() << "| Point count: " << m_point.getPointCount() << "                           |";
     //qDebug() << "| Point geo size: " << m_pointGeo.size() << "                           |";
     //qDebug() << "| Point col size: " << m_pointColor.size() << "                           |";
     qDebug() << " --------------------------------------------------------------------- ";
     qDebug() << "\n";
 
 }
+
+glm::vec3 RenderManager::generateRandomPosition()
+{
+
+    srand (static_cast <unsigned> (time(0)));
+    float x = -1.0 + static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0-(-1.0))));
+    float y = -1.0 + static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0-(-1.0))));
+
+
+    qDebug() << "x is : " << x;
+    qDebug() << "y is : " << y;
+    return glm::vec3(x, y, 0.0f);
+}
+
+void RenderManager::createPrimitive()
+{
+//    m_pointCount += 1;
+//    Entity::Geo::Point *point = new Entity::Geo::Point;
+//    point->setPointColor(POINT_COLOR);
+//    point->setupGeometry();
+//    point->setupShaders();
+//    point->draw();
+//    //geoPoint.push_back(point);
+//    update();
+//    qDebug() << "Point count: " << m_pointCount;
+}
+
 

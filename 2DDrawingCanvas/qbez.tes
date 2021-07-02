@@ -1,0 +1,28 @@
+#version 450
+
+layout( isolines ) in;
+//layout (points) out;
+
+uniform mat4 MVP;
+
+void main()
+{
+
+    vec3 p0 = gl_in[0].gl_Position.xyz;
+    vec3 p1 = gl_in[1].gl_Position.xyz;
+    vec3 p2 = gl_in[2].gl_Position.xyz;
+
+    float t = gl_TessCoord.x;
+    float one_minus_t = (1.0 - t);
+    float one_minus_t_square = one_minus_t * one_minus_t;
+    float t_square = t * t;
+    float two_times_one_minus_t = 2 * one_minus_t;
+    float w1, w3 = 0.1;
+    float w2 =  0.2888;
+
+    // Bezier interpolation
+    //vec3 p = one_minus_t_square * p0 + two_times_one_minus_t*t*p1 + t_square * p2 ;
+    vec3 p = ( p0*w1*one_minus_t_square + p1*w2*(2*t)*one_minus_t + p2*w3*t_square ) / (w1*one_minus_t_square + (w2*(2*t)*one_minus_t) + w3*t_square);
+
+    gl_Position = vec4(p, 1.0);
+}

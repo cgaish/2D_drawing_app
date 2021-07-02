@@ -1,17 +1,26 @@
 #version 450
 
-layout (location=0) in vec3 l_VertexPosition;
-layout (location=1) in vec3 l_VertexColor;
+in vec3 position;
+in vec3 instance_color;
+in vec3 instance_position;
 
-layout (location=0) out vec3 l_vColor;
+float MinPointSize = 15.0f;
+float MaxPointSize = 40.0f;
 
-uniform mat4 u_MVPMatrix;
+out vec4 color;
+
+float size = noise1(gl_InstanceID);
+
+//uniform mat4 mvp;
+
+//uniform mat4 u_MVPMatrix;
 
 void main()
 {
-    l_vColor = l_VertexColor;
 
-    gl_Position = u_MVPMatrix * vec4(l_VertexPosition,1.0);
-    gl_PointSize = 10.0f;
+    gl_Position = vec4((position + instance_position), 1.0);
+    color = vec4(instance_color, 1.0);
+    //float size = mix(MinPointSize, MaxPointSize, gl_InstanceID);
+    gl_PointSize = 20;
 }
 

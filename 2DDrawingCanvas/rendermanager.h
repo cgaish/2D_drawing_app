@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <random>
 
 // Constants
 #include <constants.h>
@@ -32,8 +33,7 @@
 #include "Camera.h"
 #include "orthographiccamera.h"
 #include "glshaderprogram.h"
-#include "point.h"
-#include "beziercurve.h"
+#include "geo.h"
 
 class RenderManager : public QOpenGLWidget
 {
@@ -55,7 +55,7 @@ public:
     void setupEntity();
     void calculateAngle( float t );
     void checkDebugContext();
-
+    float randomFloat(float a, float b);
 protected:
     void initializeGL() override;
     void paintGL() override;
@@ -63,6 +63,10 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void printAllVariables();
+    void setMatrices();
+    void createPrimitive();
+    glm::vec3 generateRandomPosition();
+
 //    void resizeEvent(QResizeEvent* ev) override {
 //        resizeGL(width(), height());
 //    }
@@ -78,17 +82,21 @@ protected:
 
 private:
     // variables
-    int m_pointCount = 1;
+    int m_pointCount = 0;
     double xPos, yPos, zPos=0;
     float starting_x = 0.0f;
     float starting_y = 0.0f;
-
+    bool isSuccess = false;
+    std::vector<Entity::Geo::CubicCurve *> geoCurve;
+    std::vector<Entity::Geo::Curve *> Curve;
+    std::vector<Entity::Geo::Circle *> geoCircle;
+    //std::vector<Entity::Geo::Point *> geoPoint;
+    //std::vector<Entity::Geo::Triangles *> geoTriangles;
+    std::vector<Entity::Geo::Particles *> geoParticles;
+    //std::vector<Entity::Geo::Quad> geoQuad;
 
     // Class variables
     OrthographicCamera m_CameraOrtho;
-    GLShaderProgram m_pointShaderProgram;
-    Entity::Point m_point;
-    Entity::BezierCurve m_bcurve;
 
 
 

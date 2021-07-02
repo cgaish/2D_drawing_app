@@ -9,9 +9,11 @@ int main(int argc, char *argv[])
 
     // Global format setup
     QSurfaceFormat canvasFormat(QSurfaceFormat::DebugContext);
+    canvasFormat.setSamples(4);
+    canvasFormat.setSamples(8);
     canvasFormat.setDepthBufferSize(24);
     canvasFormat.setStencilBufferSize(8);
-    canvasFormat.setVersion(4, 5);
+    canvasFormat.setVersion(4, 6);
     canvasFormat.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(canvasFormat);
 

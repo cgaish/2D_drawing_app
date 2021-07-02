@@ -1,0 +1,12 @@
+release/glad.o
+release/geo.o
+release/glshaderprogram.o
+release/grid.o
+release/main.o
+release/mainwindow.o
+release/orthographiccamera.o
+release/rendermanager.o
+release/stb_image.o
+release/texture.o
+release/moc_mainwindow.o
+release/moc_rendermanager.o

@@ -1,0 +1,30 @@
+#version 460
+uniform float LineWidth;
+uniform vec4 LineColor;
+uniform vec4 QuadColor;
+
+noperspective in vec3 EdgeDistance;
+
+layout ( location = 0 ) out vec4 FragColor;
+
+float edgeMix()
+{
+    // Find the smallest distance
+    float d = min( min( EdgeDistance.x, EdgeDistance.y ), EdgeDistance.z );
+
+    if( d < LineWidth - 1 ) {
+        FragColor = vec4(1);
+        //return 1.0;
+    } else if( d > LineWidth + 1 ) {
+        discard;
+    } else {
+        float x = d - (LineWidth - 1);
+        return exp2(-2.0 * (x*x));
+    }
+}
+
+void main()
+{
+    float mixVal = edgeMix();
+    FragColor = mix( QuadColor, LineColor, mixVal );
+}
