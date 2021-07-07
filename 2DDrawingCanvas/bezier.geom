@@ -1,4 +1,12 @@
-#version 460
+#version 330
+
+/* \brief Geometry GLSL shader that demonstrates how to draw basic thick and smooth bezier curves in 3D.
+ * This file is a part of shader-3dcurve example (https://github.com/vicrucann/shader-3dcurve).
+ *
+ * \author Victoria Rudakova
+ * \date January 2017
+ * \copyright MIT license
+*/
 
 uniform float Thickness;
 uniform vec2 Viewport;
@@ -41,7 +49,7 @@ vec4 toBezier(float delta, int i, vec4 P0, vec4 P1, vec4 P2, vec4 P3)
     return (P0 * one_minus_t2 * one_minus_t + P1 * 3.0 * t * one_minus_t2 + P2 * 3.0 * t2 * one_minus_t + P3 * t2 * t);
 }
 
-void drawSegment(vec2 points[4], float zValues[4], vec4 V[4])
+void drawSegment(vec2 points[4], vec4 colors[4], float zValues[4], vec4 V[4])
 {
     vec2 p0 = points[0];
     vec2 p1 = points[1];
@@ -85,16 +93,19 @@ void drawSegment(vec2 points[4], float zValues[4], vec4 V[4])
         /* close the gap */
         if( dot( v0, n1 ) > 0 ) {
             VertexOut.mTexCoord = vec2( 0, 0 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( ( p1 + Thickness * n0 ) / Viewport, zValues[1], 1.0 );
             EmitVertex();
 
             VertexOut.mTexCoord = vec2( 0, 0 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( ( p1 + Thickness * n1 ) / Viewport, zValues[1], 1.0 );
             EmitVertex();
 
             VertexOut.mTexCoord = vec2( 0, 0.5 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( p1 / Viewport, 0.0, 1.0 );
             EmitVertex();
@@ -103,16 +114,19 @@ void drawSegment(vec2 points[4], float zValues[4], vec4 V[4])
         }
         else {
             VertexOut.mTexCoord = vec2( 0, 1 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( ( p1 - Thickness * n1 ) / Viewport, zValues[1], 1.0 );
             EmitVertex();
 
             VertexOut.mTexCoord = vec2( 0, 1 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( ( p1 - Thickness * n0 ) / Viewport, zValues[1], 1.0 );
             EmitVertex();
 
             VertexOut.mTexCoord = vec2( 0, 0.5 );
+            VertexOut.mColor = colors[1];
             VertexOut.mVertex = V[1];
             gl_Position = vec4( p1 / Viewport, zValues[1], 1.0 );
             EmitVertex();
@@ -126,21 +140,25 @@ void drawSegment(vec2 points[4], float zValues[4], vec4 V[4])
     }
     // generate the triangle strip
     VertexOut.mTexCoord = vec2( 0, 0 );
+    VertexOut.mColor = colors[1];
     VertexOut.mVertex = V[1];
     gl_Position = vec4( ( p1 + length_a * miter_a ) / Viewport, zValues[1], 1.0 );
     EmitVertex();
 
     VertexOut.mTexCoord = vec2( 0, 1 );
+    VertexOut.mColor = colors[1];
     VertexOut.mVertex = V[1];
     gl_Position = vec4( ( p1 - length_a * miter_a ) / Viewport, zValues[1], 1.0 );
     EmitVertex();
 
     VertexOut.mTexCoord = vec2( 0, 0 );
+    VertexOut.mColor = colors[2];
     VertexOut.mVertex = V[2];
     gl_Position = vec4( ( p2 + length_b * miter_b ) / Viewport, zValues[2], 1.0 );
     EmitVertex();
 
     VertexOut.mTexCoord = vec2( 0, 1 );
+    VertexOut.mColor = colors[2];
     VertexOut.mVertex = V[2];
     gl_Position = vec4( ( p2 - length_b * miter_b ) / Viewport, zValues[2], 1.0 );
     EmitVertex();
@@ -159,12 +177,21 @@ void main(void)
     B[0] = gl_in[0].gl_Position;
     B[1] = gl_in[1].gl_Position;
     B[2] = gl_in[2].gl_Position;
+    B[3] = gl_in[3].gl_Position;
 
     // vertex format (will be passed to fragment shader for fogging effect)
     vec4 V[4];
     V[0] = VertexIn[0].mVertex;
     V[1] = VertexIn[1].mVertex;
     V[2] = VertexIn[2].mVertex;
+    V[3] = VertexIn[3].mVertex;
+
+    // 4 attached colors
+    vec4 C[4];
+    C[0] = VertexIn[0].mColor;
+    C[1] = VertexIn[1].mColor;
+    C[2] = VertexIn[2].mColor;
+    C[3] = VertexIn[3].mColor;
 
     /* use the points to build a bezier line */
     float delta = 1.0 / float(nSegments);

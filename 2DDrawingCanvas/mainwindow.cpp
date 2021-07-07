@@ -25,11 +25,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     RenderManager *rw = new RenderManager;
 
+    rw->setFixedSize(1024, 1024);
     this->setCentralWidget(rw);
 
     // Set status bar
     //statusBar->showMessage(tr(rw->openGLInfo));
     MainWindow::setStatusBar(statusBar);
+
 
     qDebug() << "Main window size: " << this->width() << " | " << this->height();
 

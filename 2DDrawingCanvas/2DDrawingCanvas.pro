@@ -76,9 +76,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    Curve.fs \
-    Curve.gs \
-    Curve.vs \
+    Curve.frag \
+    Curve.geom \
+    Curve.vert \
+    __.fs \
+    ___.geom \
     basic.frag \
     basic.vert \
     bez.fs \

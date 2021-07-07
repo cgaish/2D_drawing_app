@@ -96,9 +96,10 @@ void RenderManager::initializeGL()
 //    circle1->setupShaders();
 //    circle1->setupGeometry();
 //    geoCircle.push_back(circle1);
-
+    qDebug() << "Screen width, height: " << this->width() << ", " << this->height();
     Entity::Geo::Curve *curve1 = new Entity::Geo::Curve();
     curve1->setupShaders();
+    curve1->setScreenSize(this->width(), this->height());
     curve1->setupGeometry();
     Curve.push_back(curve1);
 

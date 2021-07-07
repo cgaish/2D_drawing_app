@@ -1,5 +1,15 @@
 #include "geo.h"
-
+#include <iostream>
+#include <stdlib.h>
+#include <malloc.h>
+#include <cmath>
+#include <windows.h>
+#define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno);
+static float maxError = BEZIER_MIN_ERROR;
+static float *  basis1[8] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+static float *  basis2[8] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+static float *  basis3[8] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+static float *  basis4[8] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 Entity::Geo::Geo()
 {
 
@@ -691,37 +701,59 @@ void Entity::Geo::Circle::draw()
 Entity::Geo::Curve::Curve()
 {
     glEnable(GL_PROGRAM_POINT_SIZE);
-    glEnable(GL_POINT_SMOOTH);
+//    glEnable(GL_POINT_SMOOTH);
 }
 
 Entity::Geo::Curve::~Curve()
 {
 
 }
+std::vector <float> Entity::Geo::Curve::convertPointstoNdc(float *a, int sizeOfArray){
+    // Convert coords to NDC
+    // Define NDC values
+    float max_ndc = +1.0f;
+    float min_ndc = -1.0f;
+    float offset = 0;
+    screenSize = {1024, 1024};
+    std::vector<float> pointsArrayNdc;
+
+    for (int i = 0; i <= sizeOfArray-1; i+=2)
+    {
+//        qDebug() << "Array element at [ " << i << " ]: " << a[i];
+//        qDebug() << "Screen Resolution: " << screenSize.x << ", " << screenSize.y;
+        float pPosX = (min_ndc + offset) * a[i] / screenSize.x;
+        float pPosY = (max_ndc - offset) * a[i+1] / screenSize.y;
+//        qDebug() << "PPosX: " << pPosX;
+//        qDebug() << "PPosY: " << pPosY;
+        pointsArrayNdc.push_back(pPosX);
+        pointsArrayNdc.push_back(pPosY);
+    }
+    return pointsArrayNdc;
+}
 
 void Entity::Geo::Curve::setupShaders()
 {
 
-    try {
-        m_pointShaderProgram.compileShaderFromFile("../2DDrawingCanvas/point.vert",
-                                                 GLShader::ShaderType::VERTEX );
-        m_pointShaderProgram.compileShaderFromFile("../2DDrawingCanvas/point.frag",
-                                                 GLShader::ShaderType::FRAGMENT);
+//    try {
+//        m_pointShaderProgram.compileShaderFromFile("../2DDrawingCanvas/point.vert",
+//                                                 GLShader::ShaderType::VERTEX );
+//        m_pointShaderProgram.compileShaderFromFile("../2DDrawingCanvas/point.frag",
+//                                                 GLShader::ShaderType::FRAGMENT);
 
-        m_pointShaderProgram.link();
-        m_pointShaderProgram.validate();
-        m_pointShaderProgram.use();
+//        m_pointShaderProgram.link();
+//        m_pointShaderProgram.validate();
+//        m_pointShaderProgram.use();
 
-    }  catch ( GLShaderException &e ) {
-        std::cerr << e.what() << std::endl;
-    }
-    //point1.setupMatrix("position", glm::vec3(0.0, 0.0, 0.0));
-    //m_shaderProgram.setUniform("l_VertexPosition", glm::vec3(0.0, 0.0, 0.0));
-    m_pointShaderProgramHandle = m_pointShaderProgram.getHandle();
+//    }  catch ( GLShaderException &e ) {
+//        std::cerr << e.what() << std::endl;
+//    }
+//    //point1.setupMatrix("position", glm::vec3(0.0, 0.0, 0.0));
+//    //m_shaderProgram.setUniform("l_VertexPosition", glm::vec3(0.0, 0.0, 0.0));
+//    m_pointShaderProgramHandle = m_pointShaderProgram.getHandle();
 
-    m_lineShaderProgram.compileShaderFromFile("../2DDrawingCanvas/Curve.vs", GLShader::ShaderType::VERTEX);
-//    renderProg.compileShaderFromFile("../2DDrawingCanvas/Curve.gs", GLShader::ShaderType::GEOMETRY);
-    m_lineShaderProgram.compileShaderFromFile("../2DDrawingCanvas/Curve.fs", GLShader::ShaderType::FRAGMENT);
+    m_lineShaderProgram.compileShaderFromFile("../2DDrawingCanvas/Curve.vert", GLShader::ShaderType::VERTEX);
+    m_lineShaderProgram.compileShaderFromFile("../2DDrawingCanvas/Curve.geom", GLShader::ShaderType::GEOMETRY);
+    m_lineShaderProgram.compileShaderFromFile("../2DDrawingCanvas/Curve.frag", GLShader::ShaderType::FRAGMENT);
     bool isSuccess = false;
     isSuccess = m_lineShaderProgram.link();
     isSuccess ? qDebug() << "Curve shader program linked" :
@@ -732,55 +764,67 @@ void Entity::Geo::Curve::setupShaders()
                 qDebug() << "Curve shader program not validated";
 
     m_lineShaderProgram.use();
+//    m_lineShaderProgram.setUniform("color", glm::vec4(1.0, 0.0, 0.0, 1.0));
     m_lineShaderProgramHandle = m_lineShaderProgram.getHandle();
     qDebug() << "Curve shader program handle: " << m_lineShaderProgram.getHandle();
 }
 
 void Entity::Geo::Curve::setupGeometry()
 {
-    float v[] = {-0.5, -0.2f, 0.0f, 0.5f, 0.5f, -0.2f};
-//    float v[] = {   // positions    // weights
-//                    217.63, 136.36, //48.00 ,48.00,
-//                    55.10 , 117.40, //48.00 ,48.00,
-//                    109.28, 185.12, //48.00 ,48.00,
-//                    279.93, 269.10, //48.00 ,48.00,
-//                    942.58, 668.99, //48.00 ,48.00,
-//                    387.27, 408.94, //48.00 ,48.00,
-//                    184.11, 547.09, //48.00 ,48.00,
-//                    609.39, 801.72, //48.00 ,48.00,
-//                };
+//    float v[] = {-0.5, -0.2f, 0.0f, 0.5f, 0.5f, -0.2f};
+    float v[] = {   // positions    // weights
+                    217.63 , 942.58,//217.63, 136.36, //48.00,
+                    136.36 , 668.99,//55.10 , 117.40, //48.00,
+                    55.10  , 387.27,//109.28, 185.12, //48.00,
+                    117.40 , 408.94,//279.93, 269.10, //48.00,
+                    109.28 , 184.11,//942.58, 668.99, //48.00,
+                    185.12 , 547.09,//387.27, 408.94, //48.00,
+                    279.93 , 609.39,//184.11, 547.09, //48.00,
+                    269.10 , 801.72,//609.39, 801.72, //48.00,
+                };
+//    float cv_weights[] = {48, 48, 48, 48, 48, 48, 48, 48};
     // Send control points to calculate interpolated points
-    int sizeOfArray = (sizeof (v)/sizeof(v[0]));
-    quadCurve = getQuadraticCurve(v, sizeOfArray);
-
+    sizeOfArray = sizeof(v)/sizeof(v[0]);
+    quadCurve = convertPointstoNdc(v, sizeOfArray);
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(v), v, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, quadCurve.size()*sizeof(float), quadCurve.data(), GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
 
-    GLint posAttrib = glGetAttribLocation(m_pointShaderProgramHandle, "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+//    GLint posAttrib = glGetAttribLocation(m_pointShaderProgramHandle, "position");
+//    glEnableVertexAttribArray(posAttrib);
+//    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 
     /// Curve Buffers
-    glGenBuffers(1, &m_vbo_curve);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo_curve);
-    glBufferData(GL_ARRAY_BUFFER, quadCurve.size()*sizeof (float), quadCurve.data(), GL_STATIC_DRAW);
+//    glGenBuffers(1, &m_vbo_curve);
+//    glBindBuffer(GL_ARRAY_BUFFER, m_vbo_curve);
+//    glBufferData(GL_ARRAY_BUFFER, quadCurve.size() * sizeof(float), quadCurve.data(), GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &m_vao_curve);
-    glBindVertexArray(m_vao_curve);
+//    glGenVertexArrays(1, &m_vao_curve);
+//    glBindVertexArray(m_vao_curve);
 
-    GLint curvePosAttrib = glGetAttribLocation(m_lineShaderProgramHandle, "VertexPosition");
+    GLint curvePosAttrib = glGetAttribLocation(m_lineShaderProgramHandle, "position");
     glEnableVertexAttribArray(curvePosAttrib);
     glVertexAttribPointer(curvePosAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    setMatrices();
 }
 
-void Entity::Geo::Curve::setMatrices(GLShaderProgram &p)
+void Entity::Geo::Curve::setMatrices()
 {
-    Q_UNUSED(p);
+    float c = 3.0f;
+    glm::vec3 cameraPos(0.0f ,0.0f,0.5f);
+    view = glm::lookAt(cameraPos, glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
+
+    model = glm::mat4(1.0f);
+    projection = glm::ortho(-0.4f * c, 0.4f * c, -0.3f *c, 0.3f*c, 0.1f,50.0f);
+    glm::mat4 mv = view * model;
+//    m_pointShaderProgram.use();
+//    m_pointShaderProgram.setUniform("MVP", projection * mv);
+    m_lineShaderProgram.use();
+    m_lineShaderProgram.setUniform("MVP", projection * mv);
 }
 
 void Entity::Geo::Curve::update(float t)
@@ -790,17 +834,25 @@ void Entity::Geo::Curve::update(float t)
 
 void Entity::Geo::Curve::draw()
 {
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
     glBindVertexArray(m_vao);
-    m_pointShaderProgram.use();
-    glDrawArrays(GL_POINTS, 0, 3);
-    glBindVertexArray(m_vao_curve);
+//    m_pointShaderProgram.use();
+//    glDrawArrays(GL_POINTS, 0, quadCurve.size()/2);
+//    glBindVertexArray(m_vao_curve);
     m_lineShaderProgram.use();
-    glDrawArrays(GL_LINE_STRIP, 0, quadCurve.size()/2);
+    glDrawArrays(GL_LINE_LOOP, 0, quadCurve.size()/2);
 }
 
 float Entity::Geo::Curve::randFloat()
 {
     return 0;
+}
+
+void Entity::Geo::Curve::setScreenSize(int x, int y)
+{
+    qDebug() << "Setting Screen Size";
+    screenResolution.push_back(x);
+    screenResolution.push_back(y);
 }
 
 void Entity::Geo::Curve::resize(int w, int h)
@@ -809,49 +861,4 @@ void Entity::Geo::Curve::resize(int w, int h)
     Q_UNUSED(h);
 }
 
-std::vector<float> Entity::Geo::Curve::getQuadraticCurve(float *a, int sizeOfArray)
-{
-    std::vector<float> interpolatedCurvePoints = {};
 
-    glm::vec2 p0 = {a[0], a[1]};//{0.0, 0.0};
-    glm::vec2 p1 = {a[2], a[3]};//{0.0, 0.0};
-    glm::vec2 p2 = {a[4], a[5]};//{0.0, 0.0};
-    qDebug() << "Size Of Array: " << sizeOfArray;
-//    for (int i = 0; i < sizeOfArray-2; i++){
-
-//        if(i == 0)
-//        {
-//            glm::vec2 p0 = {a[i], a[i+1]};
-//            glm::vec2 p1 = {a[i+2], a[i+3]};
-//            glm::vec2 p2 = {a[i+4], a[i+5]};
-//        }
-//        else if(i == 2){
-//            glm::vec2 p0 = {a[i-2], a[i-1]};
-//            glm::vec2 p1 = {a[i], a[i+1]};
-//            glm::vec2 p2 = {a[i+2], a[i+3]};
-//        }
-
-        float t = 0.0;
-        while(t <= 1.05){
-        float one_minus_t = (1.0 - t);
-        float one_minus_t_square = one_minus_t * one_minus_t;
-        float t_square = t * t;
-        float two_times_one_minus_t = 2 * one_minus_t;
-        float w1 = 1.0; float w3 = 1.0;
-        float w2 =  48;
-
-    //    glm::vec2 p = one_minus_t_square * p0 + two_times_one_minus_t*t*p1 + t_square * p2 ;
-        glm::vec2 p = (( p0*w1*one_minus_t_square) + ((p1*w2)*(two_times_one_minus_t*t)) + (p2*w3*t_square) ) / ((w1*one_minus_t_square) + (w2*two_times_one_minus_t*t) + (w3*t_square));
-        interpolatedCurvePoints.push_back(p.x);
-        interpolatedCurvePoints.push_back(p.y);
-        t += 0.05;
-        }
-        for(int i = 0; i < interpolatedCurvePoints.size(); i++){
-            qDebug() << "X: " << interpolatedCurvePoints[i];
-            qDebug() << "Y: " << interpolatedCurvePoints[i+1];
-        }
-
-        return interpolatedCurvePoints;
-
-//    }
-}

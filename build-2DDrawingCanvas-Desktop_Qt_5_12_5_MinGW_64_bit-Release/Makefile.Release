@@ -71,9 +71,11 @@ OBJECTS       = release/glad.o \
 		release/moc_mainwindow.o \
 		release/moc_rendermanager.o
 
-DIST          = Curve.fs \
-		Curve.gs \
-		Curve.vs \
+DIST          = Curve.frag \
+		Curve.geom \
+		Curve.vert \
+		__.fs \
+		___.geom \
 		basic.frag \
 		basic.vert \
 		bez.fs \

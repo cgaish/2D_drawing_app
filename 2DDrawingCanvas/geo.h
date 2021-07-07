@@ -16,6 +16,12 @@
 #include "glshaderprogram.h"
 #include "glshaderexception.h"
 
+#define MAX_BEZ_POINTS pow(2,8)
+#define BEZIER_MAX_ERROR 4.0f
+#define BEZIER_MIN_ERROR 0.0125f
+#define BEZIER_RENDER_ERROR 0.05f
+
+
 namespace Entity {
 
     class Geo
@@ -160,19 +166,24 @@ namespace Entity {
             ~Curve();
             void setupShaders();
             void setupGeometry();
-            void setMatrices(GLShaderProgram &p);
+            void setMatrices();
             void update(float t);
             void draw();
             float randFloat();
+            void setScreenSize(int x, int y);
             void resize(int w, int h);
-            std::vector<float> getQuadraticCurve(float *a, int sizeOfArray);
+            std::vector <float> convertPointstoNdc(float *a, int sizeOfArray);
         private:
             int width, height;
             std::vector<float> quadCurve;
+            std::vector <glm::vec2> result;
+            int sizeOfArray;
+            glm::vec2 screenSize;
             GLuint m_vao, m_vbo;
             GLuint m_vao_curve, m_vbo_curve;
             GLuint m_pointShaderProgramHandle, m_lineShaderProgramHandle;
             glm::mat4 model, view, projection;
+            std::vector<int> screenResolution;
             // Position and direction of particle emitter
             GLShaderProgram m_pointShaderProgram, m_lineShaderProgram;
 
